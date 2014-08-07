@@ -1,3 +1,5 @@
 *.swp
 *.swap
 *.*~
+*.o
+build
