@@ -26,6 +26,7 @@
 #include <X11/extensions/record.h>
 
 #include "record.h"
+#include "key.h"
 
 typedef struct _RecordData {
 	Display *ctrl_dsp;
@@ -150,7 +151,7 @@ static void*
 enable_ctx_thread(void *user_data)
 {
 	if (!XRecordEnableContext(grab_data->data_dsp, grab_data->context,
-				intercept_cb, NULL)) {
+	                          intercept_cb, NULL)) {
 		fprintf(stderr, "Unable to enable context...\n");
 		record_finalize();
 	}
@@ -158,25 +159,34 @@ enable_ctx_thread(void *user_data)
 	pthread_exit(NULL);
 }
 
+static KeyCode prev_code;
+
 static void
 intercept_cb (XPointer user_data, XRecordInterceptData *hook)
 {
 	if (hook->category != XRecordFromServer) {
 		XRecordFreeData(hook);
-		fprintf(stderr, "Data not from X server...");
+		fprintf(stderr, "Data not from X server...\n");
 		return;
 	}
 
 	int event_type = hook->data[0];
-	KeyCode keyCode = hook->data[1];
+	KeyCode keycode = hook->data[1];
 
 	switch (event_type) {
-		case KeyPress:
-			fprintf(stdout, "Key Press: %d\n", keyCode);
-			break;
-		case KeyRelease:
-			fprintf(stdout, "Key Release: %d\n", keyCode);
-			break;
+	case KeyPress:
+		/*fprintf(stdout, "Key Press: %d\n", keycode);*/
+		if (prev_code != keycode) {
+			add_key(keycode);
+			prev_code = keycode;
+		}
+		break;
+	case KeyRelease:
+		/*fprintf(stdout, "Key Release: %d\n", keycode);*/
+		prev_code = 0;
+		parse_key();
+		free_key();
+		break;
 	}
 
 	XRecordFreeData(hook);
