@@ -26,7 +26,6 @@
 #include <X11/extensions/record.h>
 
 #include "record.h"
-#include "key.h"
 
 typedef struct _RecordData {
 	Display *ctrl_dsp;
@@ -177,15 +176,12 @@ intercept_cb (XPointer user_data, XRecordInterceptData *hook)
 	case KeyPress:
 		/*fprintf(stdout, "Key Press: %d\n", keycode);*/
 		if (prev_code != keycode) {
-			add_key(keycode);
 			prev_code = keycode;
 		}
 		break;
 	case KeyRelease:
 		/*fprintf(stdout, "Key Release: %d\n", keycode);*/
 		prev_code = 0;
-		parse_key();
-		free_key();
 		break;
 	}
 

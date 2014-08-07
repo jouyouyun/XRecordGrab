@@ -19,16 +19,20 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef __KEY_H__
-#define __KEY_H__
+package main
 
-typedef struct _Key_t {
-	KeyCode code;
-	struct _Key_t *next;
-} Key_t;
+// #cgo pkg-config: x11 xtst
+// #cgo CFLAGS: -Wall -g
+// #cgo LDFLAGS: -Wall -g -lpthread
+// #include "record.h"
+import "C"
 
-void add_key(unsigned char code);
-void parse_key();
-void free_key();
+import "fmt"
 
-#endif
+func main() {
+	fmt.Println("Hello World")
+	defer C.record_finalize()
+	C.record_init()
+
+	select {}
+}
