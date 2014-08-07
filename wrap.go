@@ -21,12 +21,41 @@
 
 package main
 
-import "fmt"
+// #cgo pkg-config: x11 xtst
+// #cgo CFLAGS: -Wall -g
+// #cgo LDFLAGS: -Wall -g -lpthread
+// #include "record.h"
+import "C"
 
-func main() {
-	fmt.Println("Hello World")
-	defer finalizeRecord()
-	initRecord()
+import (
+	"fmt"
+	"sort"
+)
 
-	select {}
+var _curKeyList []int
+
+//export add_keycode_to_list
+func add_keycode_to_list(code int) {
+	_curKeyList = append(_curKeyList, code)
+}
+
+//export parse_keycode_list
+func parse_keycode_list() {
+	if len(_curKeyList) < 1 {
+		return
+	}
+
+	fmt.Println("Before sort:", _curKeyList)
+	sort.Ints(_curKeyList)
+	fmt.Println("After sort:", _curKeyList)
+
+	_curKeyList = []int{}
+}
+
+func initRecord() {
+	C.record_init()
+}
+
+func finalizeRecord() {
+	C.record_finalize()
 }
