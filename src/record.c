@@ -25,6 +25,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/record.h>
 
+#include "record.h"
+
 typedef struct _RecordData {
 	Display *ctrl_dsp;
 	Display *data_dsp;
@@ -49,14 +51,14 @@ record_init()
 	grab_data->ctrl_dsp = XOpenDisplay(NULL);
 	grab_data->data_dsp = XOpenDisplay(NULL);
 	if (grab_data->ctrl_dsp == NULL || grab_data->data_dsp == NULL) {
-		printf(stderr, "Open Display Failed\n");
+		fprintf(stderr, "Open Display Failed\n");
 		record_finalize();
 		return;
 	}
 
 	int major, first_event, first_error;
 	if (!XQueryExtension(grab_data->ctrl_dsp, "XTEST",
-	                     &dummy, &first_event, &first_error)) {
+	                     &major, &first_event, &first_error)) {
 		fprintf(stderr, "XTest extension missing...\n");
 		record_finalize();
 		return;
@@ -66,7 +68,7 @@ record_init()
 	if (!XRecordQueryVersion(grab_data->ctrl_dsp, &major, &minor)) {
 		fprintf(stderr, "Failed to obtain XRecord version\n");
 		record_finalize();
-		return
+		return;
 	}
 
 	grab_data->range = XRecordAllocRange();
@@ -106,6 +108,8 @@ record_init()
 		record_finalize();
 		return;
 	}
+
+	pthread_join(thrd, NULL);
 }
 
 void
@@ -157,4 +161,23 @@ enable_ctx_thread(void *user_data)
 static void
 intercept_cb (XPointer user_data, XRecordInterceptData *hook)
 {
+	if (hook->category != XRecordFromServer) {
+		XRecordFreeData(hook);
+		fprintf(stderr, "Data not from X server...");
+		return;
+	}
+
+	int event_type = hook->data[0];
+	KeyCode keyCode = hook->data[1];
+
+	switch (event_type) {
+		case KeyPress:
+			fprintf(stdout, "Key Press: %d\n", keyCode);
+			break;
+		case KeyRelease:
+			fprintf(stdout, "Key Release: %d\n", keyCode);
+			break;
+	}
+
+	XRecordFreeData(hook);
 }

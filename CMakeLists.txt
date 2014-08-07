@@ -24,3 +24,8 @@ include_directories(
 	${X11_INCLUDE_DIRS}
 	${XTST_INCLUDE_DIRS}
 )
+
+install(
+	PROGRAMS ${PROJECT_BINARY_DIR}/${PROJECT_NAME}
+	DESTINATION bin
+)

@@ -19,17 +19,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include <stdio.h>
+#ifndef __RECORD_H__
+#define __RECORD_H__
 
-#include "record.h"
+void record_init();
+void record_finalize();
 
-int
-main (int argc, char *argv[])
-{
-	printf("Hello World\n");
-	record_init();
-
-	for(;;){}
-
-	return 0;
-}
+#endif
