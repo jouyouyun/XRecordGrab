@@ -21,45 +21,49 @@
 
 package main
 
-import "fmt"
-import "sort"
+import (
+	"errors"
+	"fmt"
+	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/keybind"
+)
 
-var bindMap map[string]string
+var X *xgbutil.XUtil
+var initFlag bool
 
-func main() {
-	fmt.Println("Hello World")
+func initXUtil() error {
+	var err error
 
-	bindMap = make(map[string]string)
-
-	keyList := []string{
-		"Super_L", "Super_R",
-		"Control_L", "Control_R",
-		"Alt_L", "Alt_R",
-		"Shift_L", "Shift_R",
-		"y", "Y",
+	if X, err = xgbutil.NewConn(); err != nil {
+		fmt.Println("New XUtil Failed:", err)
+		return err
 	}
 
-	list := []string{"Control_L", "Alt_L", "y"}
-	for _, v := range keyList {
-		stringToKeyCode(v)
+	if !initFlag {
+		keybind.Initialize(X)
+		initFlag = true
 	}
 
-	codes := []int{}
-	for _, v := range list {
-		if code, err := stringToKeyCode(v); err != nil {
-			continue
-		} else {
-			codes = append(codes, code)
+	return nil
+}
+
+func stringToKeyCode(key string) (keycode int, err error) {
+	if len(key) < 1 {
+		return 0, errors.New("Invalid key")
+	}
+
+	if X == nil {
+		if err = initXUtil(); err != nil {
+			return 0, err
 		}
 	}
-	sort.Ints(codes)
 
-	if str, err := encodeIntList(codes); err == nil {
-		bindMap[str] = "Test grab keycode"
+	_, codes, e := keybind.ParseString(X, key)
+	if e != nil {
+		return 0, e
 	}
 
-	defer finalizeRecord()
-	initRecord()
+	fmt.Printf("Key: %s, keycode: %v\n", key, codes)
 
-	select {}
+	return int(codes[0]), nil
 }

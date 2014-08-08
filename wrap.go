@@ -28,6 +28,9 @@ package main
 import "C"
 
 import (
+	"bytes"
+	"encoding/gob"
+	"errors"
 	"fmt"
 	"sort"
 )
@@ -49,6 +52,14 @@ func parse_keycode_list() {
 	sort.Ints(_curKeyList)
 	fmt.Println("After sort:", _curKeyList)
 
+	if str, err := encodeIntList(_curKeyList); err != nil {
+		fmt.Println("Encode int list failed:", err)
+	} else {
+		if v, ok := bindMap[str]; ok {
+			fmt.Println("Exec:", v)
+		}
+	}
+
 	_curKeyList = []int{}
 }
 
@@ -58,4 +69,19 @@ func initRecord() {
 
 func finalizeRecord() {
 	C.record_finalize()
+}
+
+func encodeIntList(list []int) (string, error) {
+	if len(list) < 1 {
+		return "", errors.New("Invalid int list")
+	}
+
+	var buf bytes.Buffer
+
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(&list); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
