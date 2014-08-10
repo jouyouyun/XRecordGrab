@@ -80,3 +80,47 @@ func formatShortcut(shortcut string) (retStr string) {
 
 	return
 }
+
+func formatModifier(modStr string) []string {
+	if len(modStr) < 1 {
+		return []string{}
+	}
+
+	tmpStr := strings.ToLower(modStr)
+	switch tmpStr {
+	case "control":
+		return []string{"Control_L", "Control_R"}
+	case "shift":
+		return []string{"Shift_L", "Shift_R"}
+	case "super":
+		return []string{"Super_L", "Super_R"}
+	case "alt":
+		return []string{"Alt_L", "Alt_R"}
+	}
+
+	return []string{modStr}
+}
+
+func getKeyStrFromShortcut(shortcut string) []string {
+	if len(shortcut) < 1 {
+		return []string{}
+	}
+
+	lshortcut := ""
+	rshortcut := ""
+
+	shortcut = formatShortcut(shortcut)
+	list := strings.Split(shortcut, "-")
+	for _, v := range list {
+		l := formatModifier(v)
+		if len(l) == 2 {
+			lshortcut += l[0] + "-"
+			rshortcut += l[1] + "-"
+		} else {
+			lshortcut += v
+			rshortcut += v
+		}
+	}
+
+	return []string{lshortcut, rshortcut}
+}
