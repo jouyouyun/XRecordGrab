@@ -80,8 +80,8 @@ record_init()
 	}
 
 	grab_data->range->device_events.first = KeyPress;
-	grab_data->range->device_events.last = KeyRelease;
-	/*grab_data->range->device_events.last = ButtonRelease;*/
+	/*grab_data->range->device_events.last = KeyRelease;*/
+	grab_data->range->device_events.last = ButtonRelease;
 
 	XRecordClientSpec spec = XRecordAllClients;
 	grab_data->context = XRecordCreateContext(grab_data->data_dsp,
@@ -160,6 +160,7 @@ enable_ctx_thread(void *user_data)
 }
 
 static KeyCode prev_code;
+static int keyPressFlag;
 
 static void
 intercept_cb (XPointer user_data, XRecordInterceptData *hook)
@@ -175,6 +176,7 @@ intercept_cb (XPointer user_data, XRecordInterceptData *hook)
 
 	switch (event_type) {
 	case KeyPress:
+		keyPressFlag = 1;
 		/*fprintf(stdout, "Key Press: %d\n", keycode);*/
 		if (prev_code != keycode) {
 			add_keycode_to_list(keycode);
@@ -182,9 +184,24 @@ intercept_cb (XPointer user_data, XRecordInterceptData *hook)
 		}
 		break;
 	case KeyRelease:
+		keyPressFlag = 0;
 		/*fprintf(stdout, "Key Release: %d\n", keycode);*/
 		parse_keycode_list();
 		prev_code = 0;
+		break;
+	case ButtonPress:
+		if (prev_code != keycode) {
+			add_keycode_to_list(keycode);
+			prev_code = keycode;
+		}
+		break;
+	case ButtonRelease:
+		// filter only mouse press
+		if (keyPressFlag == 1) {
+			keyPressFlag = 0;
+			parse_keycode_list();
+			prev_code = 0;
+		}
 		break;
 	}
 

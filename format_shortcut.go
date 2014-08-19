@@ -25,6 +25,70 @@ import (
 	"strings"
 )
 
+var (
+	_keyToModMap = map[string]string{
+		"caps_lock": "lock",
+		"alt":       "mod1",
+		"meta":      "mod1",
+		"num_lock":  "mod2",
+		"super":     "mod4",
+		"hyper":     "mod4",
+	}
+
+	_modToKeyMap = map[string]string{
+		"mod1": "alt",
+		"mod2": "num_lock",
+		"mod4": "super",
+		"lock": "caps_lock",
+	}
+)
+
+func convertkeyToMod(key string) (mod string) {
+	mod = key
+	if str, ok := _keyToModMap[key]; ok {
+		mod = str
+	}
+
+	return
+}
+
+func convertModToKey(mod string) (key string) {
+	key = mod
+	if str, ok := _modToKeyMap[mod]; ok {
+		key = str
+	}
+
+	return
+}
+
+func convertShortcutToModStr(shortcut string) (modStr string) {
+	list := strings.Split(shortcut, "-")
+	lenght := len(list)
+	for i, key := range list {
+		mod := convertkeyToMod(key)
+		modStr += mod
+		if i != lenght-1 {
+			modStr += "-"
+		}
+	}
+
+	return
+}
+
+func convertModStrToShortcut(modStr string) (shortcut string) {
+	list := strings.Split(modStr, "-")
+	lenght := len(list)
+	for i, mod := range list {
+		key := convertModToKey(mod)
+		shortcut += key
+		if i != lenght-1 {
+			shortcut += "-"
+		}
+	}
+
+	return
+}
+
 func formatShortcut(shortcut string) (retStr string) {
 	if len(shortcut) < 1 {
 		return
@@ -81,7 +145,7 @@ func formatShortcut(shortcut string) (retStr string) {
 	return
 }
 
-func formatModifier(modStr string) []string {
+func modifierToKeyName(modStr string) []string {
 	if len(modStr) < 1 {
 		return []string{}
 	}
@@ -101,7 +165,7 @@ func formatModifier(modStr string) []string {
 	return []string{modStr}
 }
 
-func getKeyStrFromShortcut(shortcut string) []string {
+func shortcutToKeyNameList(shortcut string) []string {
 	if len(shortcut) < 1 {
 		return []string{}
 	}
@@ -111,16 +175,52 @@ func getKeyStrFromShortcut(shortcut string) []string {
 
 	shortcut = formatShortcut(shortcut)
 	list := strings.Split(shortcut, "-")
-	for _, v := range list {
-		l := formatModifier(v)
+	lenght := len(list)
+	multiFlag := false
+	for i, v := range list {
+		if len(v) < 1 {
+			continue
+		}
+
+		l := modifierToKeyName(v)
 		if len(l) == 2 {
-			lshortcut += l[0] + "-"
-			rshortcut += l[1] + "-"
+			multiFlag = true
+			lshortcut += l[0]
+			rshortcut += l[1]
 		} else {
 			lshortcut += v
 			rshortcut += v
 		}
+
+		if i != lenght-1 {
+			lshortcut += "-"
+			rshortcut += "-"
+		}
+	}
+
+	if multiFlag {
+		return []string{lshortcut}
 	}
 
 	return []string{lshortcut, rshortcut}
+}
+
+func shortcutToXgbShortcut(shortcut string) (xgbShortcut string) {
+	shortcut = formatShortcut(shortcut)
+	if len(shortcut) < 1 {
+		return
+	}
+
+	shortcut = strings.ToLower(shortcut)
+	xgbShortcut = convertShortcutToModStr(shortcut)
+	return
+}
+
+func xgbShortcutToShortcut(xgbShortcut string) (shortcut string) {
+	if len(xgbShortcut) < 1 {
+		return
+	}
+
+	shortcut = convertModStrToShortcut(xgbShortcut)
+	return
 }

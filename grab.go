@@ -26,6 +26,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
+	"sort"
+	"strings"
 )
 
 var X *xgbutil.XUtil
@@ -47,7 +49,48 @@ func initXUtil() error {
 	return nil
 }
 
-func stringToKeyCode(key string) (keycode int, err error) {
+func xgbGrab(shortcut string) bool {
+	if len(shortcut) < 1 {
+		return false
+	}
+
+	mod, codes, err := keybind.ParseString(X, shortcut)
+	if err != nil {
+		fmt.Printf("Parse shortcut '%s' failed: %v\n", shortcut, err)
+		return false
+	}
+
+	for _, code := range codes {
+		if err := keybind.GrabChecked(X, X.RootWin(),
+			mod, code); err != nil {
+			fmt.Printf("Grab '%s' failed: %v\n", shortcut, err)
+			xgbUngrab(shortcut)
+			return false
+		}
+	}
+
+	return true
+}
+
+func xgbUngrab(shortcut string) bool {
+	if len(shortcut) < 1 {
+		return false
+	}
+
+	mod, codes, err := keybind.ParseString(X, shortcut)
+	if err != nil {
+		fmt.Printf("Parse shortcut '%s' failed: %v\n", shortcut, err)
+		return false
+	}
+
+	for _, code := range codes {
+		keybind.Ungrab(X, X.RootWin(), mod, code)
+	}
+
+	return true
+}
+
+func keyNameToKeyCode(key string) (keycode int, err error) {
 	if len(key) < 1 {
 		return 0, errors.New("Invalid key")
 	}
@@ -66,4 +109,56 @@ func stringToKeyCode(key string) (keycode int, err error) {
 	fmt.Printf("Key: %s, keycode: %v\n", key, codes)
 
 	return int(codes[0]), nil
+}
+
+func keyNameToKeyCodeList(keysName string) (codeList []int, ok bool) {
+	if len(keysName) < 1 {
+		return
+	}
+
+	names := strings.Split(keysName, "-")
+	errFlag := false
+	for _, name := range names {
+		if code, err := keyNameToKeyCode(name); err != nil {
+			errFlag = true
+			break
+		} else {
+			codeList = append(codeList, code)
+		}
+	}
+
+	if errFlag {
+		return []int{}, false
+	}
+
+	return codeList, true
+}
+
+func recordGrab(shortcut, action string) bool {
+	if len(shortcut) < 1 {
+		return false
+	}
+
+	keyNameList := shortcutToKeyNameList(shortcut)
+	if len(keyNameList) < 1 {
+		return false
+	}
+	for _, name := range keyNameList {
+		codes, ok := keyNameToKeyCodeList(name)
+		if !ok {
+			continue
+		}
+		sort.Ints(codes)
+		if str, err := encodeIntList(codes); err != nil {
+			continue
+		} else {
+			bindMap[str] = action
+		}
+	}
+
+	return true
+}
+
+func recordUngrab(shortcut string) bool {
+	return true
 }

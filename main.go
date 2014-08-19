@@ -22,7 +22,6 @@
 package main
 
 import "fmt"
-import "sort"
 
 var bindMap map[string]string
 
@@ -31,32 +30,7 @@ func main() {
 
 	bindMap = make(map[string]string)
 
-	keyList := []string{
-		"Super_L", "Super_R",
-		"Control_L", "Control_R",
-		"Alt_L", "Alt_R",
-		"Shift_L", "Shift_R",
-		"y", "Y",
-	}
-
-	list := []string{"Control_L", "Alt_L", "y"}
-	for _, v := range keyList {
-		stringToKeyCode(v)
-	}
-
-	codes := []int{}
-	for _, v := range list {
-		if code, err := stringToKeyCode(v); err != nil {
-			continue
-		} else {
-			codes = append(codes, code)
-		}
-	}
-	sort.Ints(codes)
-
-	if str, err := encodeIntList(codes); err == nil {
-		bindMap[str] = "Test grab keycode"
-	}
+	recordGrab("Control_L-Alt_L-Y", "Test grab keycode")
 
 	defer finalizeRecord()
 	initRecord()
