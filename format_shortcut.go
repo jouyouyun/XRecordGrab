@@ -145,6 +145,26 @@ func formatShortcut(shortcut string) (retStr string) {
 	return
 }
 
+func shortcutToXgbShortcut(shortcut string) (xgbShortcut string) {
+	shortcut = formatShortcut(shortcut)
+	if len(shortcut) < 1 {
+		return
+	}
+
+	shortcut = strings.ToLower(shortcut)
+	xgbShortcut = convertShortcutToModStr(shortcut)
+	return
+}
+
+func xgbShortcutToShortcut(xgbShortcut string) (shortcut string) {
+	if len(xgbShortcut) < 1 {
+		return
+	}
+
+	shortcut = convertModStrToShortcut(xgbShortcut)
+	return
+}
+
 func modifierToKeyName(modStr string) []string {
 	if len(modStr) < 1 {
 		return []string{}
@@ -203,24 +223,4 @@ func shortcutToKeyNameList(shortcut string) []string {
 	}
 
 	return []string{lshortcut, rshortcut}
-}
-
-func shortcutToXgbShortcut(shortcut string) (xgbShortcut string) {
-	shortcut = formatShortcut(shortcut)
-	if len(shortcut) < 1 {
-		return
-	}
-
-	shortcut = strings.ToLower(shortcut)
-	xgbShortcut = convertShortcutToModStr(shortcut)
-	return
-}
-
-func xgbShortcutToShortcut(xgbShortcut string) (shortcut string) {
-	if len(xgbShortcut) < 1 {
-		return
-	}
-
-	shortcut = convertModStrToShortcut(xgbShortcut)
-	return
 }
